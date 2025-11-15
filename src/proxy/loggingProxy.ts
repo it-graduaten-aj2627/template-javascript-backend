@@ -1,5 +1,5 @@
-import type {NextRequest, NextResponse} from 'next/server'
 import {cookies} from 'next/headers'
+import type {NextRequest, NextResponse} from 'next/server'
 import type {SessionWithProfile} from '@/models/users'
 
 export async function loggingProxy(

@@ -1,23 +1,29 @@
 import 'server-only'
 import type {NextRequest, NextResponse} from 'next/server'
+import type {Logger} from 'pino'
 import type {ZodType} from 'zod/v4'
 import {z} from 'zod/v4'
-import type {Profile} from '@/models/users'
-import {getSessionProfileFromCookie} from '@/lib/sessionUtils'
-import type {ApiRoute} from '@/models/apiRoute'
-import {badRequest, internalServerError, ok, unauthorized} from '@/lib/routeResponses'
-import {validateSchema} from '@/lib/validateSchema'
-import {convertFormData} from '@/lib/convertFormData'
 import type {Role} from '@/generated/prisma/enums'
-import type {Logger} from 'pino'
-import {getLogger} from '@/lib/logger'
+import {convertFormData} from '@/lib/convertFormData'
 import {validateJwtToken} from '@/lib/jwtUtils'
+import {getLogger} from '@/lib/logger'
+import {badRequest, internalServerError, ok, unauthorized} from '@/lib/routeResponses'
+import {getSessionProfileFromCookie} from '@/lib/sessionUtils'
+import {validateSchema} from '@/lib/validateSchema'
+import type {ApiRoute} from '@/models/apiRoute'
+import type {Profile} from '@/models/users'
 
 const emptySchema = z.object({})
 type EmptySchema = ZodType<typeof emptySchema>
 
-type PublicContext<Schema extends ZodType> = {data: z.infer<Schema>; logger: Logger; request: NextRequest}
-type ProtectedContext<Schema extends ZodType> = PublicContext<Schema> & {profile: Profile}
+type PublicContext<Schema extends ZodType> = {
+  data: z.infer<Schema>
+  logger: Logger
+  request: NextRequest
+}
+type ProtectedContext<Schema extends ZodType> = PublicContext<Schema> & {
+  profile: Profile
+}
 type Context<Schema extends ZodType, Auth extends boolean> = Auth extends true
   ? ProtectedContext<Schema>
   : PublicContext<Schema>
@@ -25,7 +31,7 @@ type Context<Schema extends ZodType, Auth extends boolean> = Auth extends true
 type WrappedPublicAPIRouteFn<Params, Schema extends ZodType, Auth extends boolean> = (
   context: Context<Schema, Auth>,
   params: Params,
-) => Promise<NextResponse | void> | NextResponse | void
+) => Promise<NextResponse | undefined> | NextResponse | undefined
 
 interface ApiRouteOptions<Params, Schema extends ZodType, Auth extends boolean> {
   // The API function which contains the logic for the given function.
@@ -52,7 +58,7 @@ interface ApiRouteOptions<Params, Schema extends ZodType, Auth extends boolean> 
  * A utility function used to abstract the common logic of API routes which are only accessible by all users (including
  * unauthenticated ones).
  *
- * @param options An object containing the configuration for the API route..
+ * @param options An object containing the configuration for the API route.
  */
 export function publicApiRoute<Params, Schema extends ZodType>(
   options: Omit<ApiRouteOptions<Params, Schema, false>, 'authenticated' | 'requiredRoles' | 'authenticationType'>,
@@ -64,7 +70,7 @@ export function publicApiRoute<Params, Schema extends ZodType>(
  * A utility function used to abstract the common logic of API routes which are only accessible by authenticated
  * users.
  *
- * @param options An object containing the configuration for the API route..
+ * @param options An object containing the configuration for the API route.
  */
 export function protectedApiRoute<Params, Schema extends ZodType = EmptySchema>(
   options: Omit<ApiRouteOptions<Params, Schema, true>, 'authenticated'>,
@@ -75,6 +81,7 @@ export function protectedApiRoute<Params, Schema extends ZodType = EmptySchema>(
 function apiRoute<Params = unknown, Schema extends ZodType = EmptySchema, Auth extends boolean = true>(
   options: ApiRouteOptions<Params, Schema, Auth>,
 ): ApiRoute<Params> {
+  const start = Date.now()
   const authenticated = options?.authenticated === undefined ? true : options?.authenticated
   const type = options?.type ?? 'body'
   const schema = options?.schema ?? emptySchema
@@ -86,9 +93,11 @@ function apiRoute<Params = unknown, Schema extends ZodType = EmptySchema, Auth e
     let profile: Profile | null | undefined = null
 
     if (authenticationType === 'jwt' && authenticated) {
+      logger.trace(`Checking authentication through HTTP headers.`)
       const [_, token] = (request.headers.get('Authorization') || ' ').split(' ')
       profile = validateJwtToken(token)
     } else if (authenticated) {
+      logger.trace(`Checking authentication through a session cookie.`)
       profile = await getSessionProfileFromCookie()
     }
 
@@ -96,7 +105,7 @@ function apiRoute<Params = unknown, Schema extends ZodType = EmptySchema, Auth e
       (!profile && authenticated) ||
       (profile && options.requiredRoles && !options.requiredRoles.includes(profile.role))
     ) {
-      logger.warn('Unauthorized user tried accessing API route.')
+      logger.warn(`Unauthorized user ${profile?.id} tried executing API Route.`)
       return unauthorized()
     }
 
@@ -112,12 +121,14 @@ function apiRoute<Params = unknown, Schema extends ZodType = EmptySchema, Auth e
     const {data, errors} = validateSchema(schema, unvalidatedData)
 
     if (errors || !data) {
+      logger.trace(`Validation of submitted data failed for API Route.`)
       return badRequest(errors)
     }
 
     try {
       const context = {request, data, profile, logger} as Context<Schema, Auth>
       const result = await options.routeFn(context, awaitedParams)
+      logger.info(`API Route completed successfully in ${Date.now() - start} ms`)
       return result ?? ok()
     } catch (error) {
       logger.error(error)

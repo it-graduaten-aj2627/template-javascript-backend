@@ -1,8 +1,8 @@
 import type {NextRequest, NextResponse} from 'next/server'
-import {extendSessionAndSetCookie} from '@/lib/sessionUtils'
 import {SessionDuration} from '@/constants'
-import type {SessionWithProfile} from '@/models/users'
 import {getLogger} from '@/lib/logger'
+import {extendSessionAndSetCookie} from '@/lib/sessionUtils'
+import type {SessionWithProfile} from '@/models/users'
 
 export async function sessionManagementProxy(
   _: NextRequest,

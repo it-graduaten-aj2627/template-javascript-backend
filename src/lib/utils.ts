@@ -1,9 +1,4 @@
-import {clsx, type ClassValue} from 'clsx'
-import {twMerge} from 'tailwind-merge'
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+export {cn} from 'cn'
 
 /**
  * Indent a string with a given number of spaces on each line except the first.

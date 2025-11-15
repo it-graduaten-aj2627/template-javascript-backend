@@ -1,5 +1,5 @@
 import 'server-only'
-import {pbkdf2Sync, randomBytes} from 'crypto'
+import {pbkdf2Sync, randomBytes} from 'node:crypto'
 
 export const hashOptions = {
   keyLength: 64,

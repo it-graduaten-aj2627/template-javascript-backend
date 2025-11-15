@@ -11,8 +11,22 @@ export function convertFormData<T>(data: FormData): T {
   // Dit zijn interne dingen die door Next.js worden toegevoegd.
   const keys = Array.from(data.keys()).filter(key => !key.startsWith('$ACTION'))
 
+  // Controleer of er keys zijn die meerdere keren voorkomen (checkbox groups en selects met multiple).
+  const keyCounts: Record<string, number> = {}
+  keys.forEach(key => {
+    keyCounts[key] = keyCounts[key] ? keyCounts[key] + 1 : 1
+  })
+
   // Voeg alle top-level keys toe aan het resultaat.
-  keys.filter(key => !key.includes('.')).forEach(key => (result[key] = data.get(key)))
+  keys
+    .filter(key => !key.includes('.'))
+    .forEach(key => {
+      if (keyCounts[key] > 1) {
+        result[key] = data.getAll(key)
+      } else {
+        result[key] = data.get(key)
+      }
+    })
 
   // Vorm geneste form data met keys zoals arrayName.index.key en objectNaam.object.key om naar een object.
   const multipartKeys = keys.filter(key => key.includes('.'))
@@ -21,7 +35,7 @@ export function convertFormData<T>(data: FormData): T {
 
   for (const multipartKey of multipartKeys) {
     const keyParts = multipartKey.split('.')
-    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the object, so we have to use any here.
     let current: any = result
 
     for (let i = 0; i < keyParts.length; i++) {
@@ -43,7 +57,7 @@ export function convertFormData<T>(data: FormData): T {
         // In het andere geval moeten we een object aanmaken.
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        current[keyPart] = isNaN(parseInt(keyParts[i + 1])) ? {} : []
+        current[keyPart] = Number.isNaN(parseInt(keyParts[i + 1], 10)) ? {} : []
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access

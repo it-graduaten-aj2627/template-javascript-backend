@@ -1,5 +1,5 @@
-import pino, {type Logger} from 'pino'
 import {headers} from 'next/headers'
+import pino, {type Logger} from 'pino'
 
 // Tijdens development wordt er gebruik gemaakt van hot module reloading (HMR), hierdoor kunnen er verschillende
 // instanties van de logger aangemaakt worden.

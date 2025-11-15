@@ -7,22 +7,9 @@ const uuidV4Regex = new RegExp(/[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A
 
 const publicRoutes = new Set<string>(['/', '/login', '/register'])
 
-const protectedRoutes = new Set<string>([
-  '/contacts',
-  '/contacts/new',
-  '/contacts/:param',
-  '/contacts/:param/edit',
-  '/meetings',
-  '/meetings/:param',
-  '/tags',
-  '/tags/:param',
-  '/account',
-])
+const protectedRoutes = new Set<string>([])
 
-const publicRedirects: Record<string, string> = {
-  '/login': '/contacts',
-  '/register': '/contacts',
-}
+const publicRedirects: Record<string, string> = {}
 
 export async function redirectProxy(
   request: NextRequest,

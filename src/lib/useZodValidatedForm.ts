@@ -1,10 +1,10 @@
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema'
+import {useActionState, useEffect} from 'react'
 import type {Path, UseFormProps, UseFormReturn} from 'react-hook-form'
 import {useForm} from 'react-hook-form'
-import type {ZodObject} from 'zod/v4'
-import {useActionState, useEffect} from 'react'
-import type {FormAction, FormActionDispatch, FormActionResponse} from '@/models/serverFunctions'
-import {standardSchemaResolver} from '@hookform/resolvers/standard-schema'
 import type {input, output} from 'zod'
+import type {ZodObject} from 'zod/v4'
+import type {FormAction, FormActionDispatch, FormActionResponse} from '@/models/serverFunctions'
 
 const initialFormState = {
   success: false,
@@ -14,6 +14,7 @@ type UseZodValidatedFormReturn<Schema extends ZodObject, ReturnType> = [
   UseFormReturn<input<Schema>, unknown, output<Schema>>,
   FormActionDispatch,
   FormActionResponse<ReturnType>,
+  boolean,
 ]
 
 export function useZodValidatedForm<Schema extends ZodObject, ReturnType>(
@@ -21,7 +22,7 @@ export function useZodValidatedForm<Schema extends ZodObject, ReturnType>(
   action: FormAction<ReturnType>,
   props?: UseFormProps<input<Schema>, unknown, output<Schema>>,
 ): UseZodValidatedFormReturn<Schema, ReturnType> {
-  const [state, dispatch] = useActionState(action, initialFormState as FormActionResponse<ReturnType>)
+  const [state, dispatch, isPending] = useActionState(action, initialFormState as FormActionResponse<ReturnType>)
   const form = useForm<input<Schema>, unknown, output<Schema>>({
     resolver: standardSchemaResolver(schema),
     ...props,
@@ -33,14 +34,14 @@ export function useZodValidatedForm<Schema extends ZodObject, ReturnType>(
       form.reset(state.submittedData as input<Schema>)
     }
     if (state?.errors) {
-      Object.keys(state.errors).forEach(field =>
+      Object.keys(state.errors).forEach(field => {
         form.setError(field === 'errors' ? 'root' : (field as Path<input<Schema>>), {
           type: 'manual',
           message: state.errors![field]?.join(', '),
-        }),
-      )
+        })
+      })
     }
   }, [state, form])
 
-  return [form, dispatch, state.data as FormActionResponse<ReturnType>]
+  return [form, dispatch, state.data as FormActionResponse<ReturnType>, isPending]
 }

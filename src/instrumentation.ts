@@ -12,11 +12,13 @@ export function register() {
     logger.warn(indentMultiline(args.join('\n')))
   }
 
+  // eslint-disable-next-line no-console
   console.debug = async (...args: string[]) => {
     const logger = await getLogger()
     logger.debug(indentMultiline(args.join('\n')))
   }
 
+  // eslint-disable-next-line no-console
   console.log = async (...args: string[]) => {
     const logger = await getLogger()
     logger.info(indentMultiline(args.join('\n')))

@@ -1,8 +1,8 @@
-import type {FormEventHandler, FormHTMLAttributes, PropsWithChildren} from 'react'
+import {CircleX} from 'lucide-react'
+import type {FormHTMLAttributes, PropsWithChildren, SubmitEventHandler} from 'react'
 import {useRef} from 'react'
 import type {FieldPath, FieldValues, UseFormReturn} from 'react-hook-form'
 import {FormProvider} from 'react-hook-form'
-import {CircleX} from 'lucide-react'
 
 interface FormProps<TFieldValues extends FieldValues, TContext = unknown, TTransformedValues = TFieldValues>
   extends PropsWithChildren,
@@ -23,7 +23,7 @@ function Form<TFieldValues extends FieldValues, TContext = unknown, TTransformed
   const formRef = useRef<HTMLFormElement>(null)
   const hasBeenValidated = useRef<boolean>(false)
 
-  const onSubmitHandler: FormEventHandler = evt => {
+  const onSubmitHandler: SubmitEventHandler = evt => {
     if (!hasBeenValidated.current) {
       // If the form has not yet been validated on the client side, we need to prevent the default action (submitting).
       evt.preventDefault()

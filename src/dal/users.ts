@@ -1,11 +1,11 @@
 import 'server-only'
-import {prismaClient} from './prismaClient'
-import type {Prisma, Role, User} from '@/generated/prisma/client'
 import {cache} from 'react'
+import {SessionDuration} from '@/constants'
+import type {Prisma, Role, User} from '@/generated/prisma/client'
 import {hashPassword} from '@/lib/passwordUtils'
 import type {Profile, SessionWithProfile} from '@/models/users'
 import {profileOmit, sessionWithProfileInclude} from '@/models/users'
-import {SessionDuration} from '@/constants'
+import {prismaClient} from './prismaClient'
 
 export type CreateUserParams = Prisma.UserCreateInput
 

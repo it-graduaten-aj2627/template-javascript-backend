@@ -12,4 +12,6 @@ export const sessionWithProfileInclude = {
   },
 } satisfies Prisma.SessionInclude
 
-export type SessionWithProfile = Prisma.SessionGetPayload<{include: typeof sessionWithProfileInclude}>
+export type SessionWithProfile = Prisma.SessionGetPayload<{
+  include: typeof sessionWithProfileInclude
+}>

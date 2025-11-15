@@ -1,7 +1,7 @@
 import 'server-only'
 import JWT from 'jsonwebtoken'
-import type {Profile, SessionWithProfile} from '@/models/users'
 import type {Role} from '@/generated/prisma/enums'
+import type {Profile, SessionWithProfile} from '@/models/users'
 
 const {PUBLIC_KEY, PRIVATE_KEY} = process.env
 const TOKEN_EXPIRATION = '24h'
@@ -49,7 +49,12 @@ export const createJwtToken = (user: Profile) => {
       role: user.role,
     },
     PRIVATE_KEY_DECODED,
-    {algorithm: 'RS256', expiresIn: TOKEN_EXPIRATION, subject: user.email, issuer: 'contacts-app'},
+    {
+      algorithm: 'RS256',
+      expiresIn: TOKEN_EXPIRATION,
+      subject: user.email,
+      issuer: 'contacts-app',
+    },
   )
 }
 
@@ -63,6 +68,11 @@ export const createStatefulJwtToken = (session: SessionWithProfile) => {
       sessionId: session.id,
     },
     PRIVATE_KEY_DECODED,
-    {algorithm: 'RS256', expiresIn: TOKEN_EXPIRATION, subject: session.user.email, issuer: 'contacts-app'},
+    {
+      algorithm: 'RS256',
+      expiresIn: TOKEN_EXPIRATION,
+      subject: session.user.email,
+      issuer: 'contacts-app',
+    },
   )
 }

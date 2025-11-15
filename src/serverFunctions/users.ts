@@ -8,12 +8,12 @@
  */
 'use server'
 
-import {redirect} from 'next/navigation'
 import {revalidatePath} from 'next/cache'
+import {redirect} from 'next/navigation'
 import {createUser, getUserByEmail, startSession, stopSession, updateUser} from '@/dal/users'
 import {getSalt, hashOptions, verifyPassword} from '@/lib/passwordUtils'
-import {clearSessionCookie, getSessionId, setSessionCookie} from '@/lib/sessionUtils'
 import {protectedFormAction, protectedServerFunction, publicFormAction} from '@/lib/serverFunctions'
+import {clearSessionCookie, getSessionId, setSessionCookie} from '@/lib/sessionUtils'
 import {registerSchema, signInSchema, updateUserSchema} from '@/schemas/userSchemas'
 
 export const registerAction = publicFormAction({
@@ -26,9 +26,10 @@ export const registerAction = publicFormAction({
     logger.info(`New session started: ${session.id}, ends at ${session.activeUntil.toISOString()}`)
 
     await setSessionCookie(session)
-    redirect('/contacts')
+    redirect('/')
   },
   functionName: 'Register action',
+  globalErrorMessage: "We couldn't create an account for you, please try again or log in with an existing account.",
 })
 
 export const signInAction = publicFormAction({
@@ -49,7 +50,12 @@ export const signInAction = publicFormAction({
 
     if (!isValidPassword) {
       logger.warn(`Failed sign in attempt for ${data.email}.`)
-      return
+      return {
+        success: false,
+        errors: {
+          errors: ['No account found with the given email/password combination.'],
+        },
+      }
     }
 
     logger.info(`Successful authentication request for ${user!.id}`)
@@ -58,8 +64,7 @@ export const signInAction = publicFormAction({
 
     await setSessionCookie(session)
 
-    // De gebruiker is ingelogd, dus redirecten we naar de contactenpagina.
-    redirect('/contacts')
+    redirect('/')
   },
   functionName: 'Sign in action',
 })
